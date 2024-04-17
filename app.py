@@ -1,124 +1,77 @@
 import tkinter as tk
-from tkinter import *
+from tkinter import ttk
 
-import utils as U
+from models.student import Student
 
-class App(tk.Tk):
-    def __init__(self):
+
+class StudentTableApp(tk.Tk):
+    def __init__(self, students):
         super().__init__()
+        self.title("Student Table App")
+        self.students = students
+        self.filtered_students = students  # Initialize with all students
+        self.initialize_gui()
 
-        ## Setting up Initial Things
-        self.title("Sample Tkinter Structuring")
-        self.geometry("720x550")
-        self.resizable(True, True)
-        self.iconphoto(False, tk.PhotoImage(file="assets/title_icon.png"))
-    
-        ## Creating a container
-        container = tk.Frame(self, bg="#8AA7A9")
-        container.pack(side="top", fill="both", expand = True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+    def initialize_gui(self):
+        # Filter options for majors and departments
+        majors = ['All'] + sorted(set(student.major for student in self.students))
+        departments = ['All'] + sorted(set(student.department for student in self.students))
 
+        # Inline filtering widgets
+        filter_frame = ttk.Frame(self)
+        filter_frame.pack(pady=10)
 
-        ## Initialize Frames
-        self.frames = {}
-        self.HomePage = HomePage
-        self.Validation = Validation
+        ttk.Label(filter_frame, text="Filter by Major:").grid(row=0, column=0, padx=5)
+        self.major_combobox = ttk.Combobox(filter_frame, values=majors, state="readonly")
+        self.major_combobox.grid(row=0, column=1, padx=5)
+        self.major_combobox.current(0)  # Set default selection to 'All'
+        self.major_combobox.bind("<<ComboboxSelected>>", self.filter_data)
 
-        ## Defining Frames and Packing it
-        for F in {HomePage, Validation}:
-            frame = F(self, container)
-            self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")    
-           
-        self.show_frame(HomePage)
+        ttk.Label(filter_frame, text="Filter by Department:").grid(row=0, column=2, padx=5)
+        self.dept_combobox = ttk.Combobox(filter_frame, values=departments, state="readonly")
+        self.dept_combobox.grid(row=0, column=3, padx=5)
+        self.dept_combobox.current(0)  # Set default selection to 'All'
+        self.dept_combobox.bind("<<ComboboxSelected>>", self.filter_data)
 
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        menubar = frame.create_menubar(self)
-        self.configure(menu=menubar)
-        frame.tkraise()                         ## This line will put the frame on front
+        # Table to display student data
+        columns = ['Name', 'Major', 'Department']
+        self.tree = ttk.Treeview(self, columns=columns, show='headings')
+        for col in columns:
+            self.tree.heading(col, text=col)
+        self.tree.pack(pady=20)
+
+        # Insert initial data into the table
+        self.update_table(self.filtered_students)
+
+    def filter_data(self, event=None):
+        selected_major = self.major_combobox.get()
+        selected_department = self.dept_combobox.get()
+
+        self.filtered_students = [student for student in self.students
+                                  if (selected_major == 'All' or student.major == selected_major)
+                                  and (selected_department == 'All' or student.department == selected_department)]
+
+        self.update_table(self.filtered_students)
  
+    def update_table(self, filtered_students):
+        # Clear existing table data
+        self.tree.delete(*self.tree.get_children())
 
-
-
-#---------------------------------------- HOME PAGE FRAME / CONTAINER ------------------------------------------------------------------------
-
-class HomePage(tk.Frame):
-    def __init__(self, parent, container):
-        super().__init__(container)
-
-        label = tk.Label(self, text="Home Page", font=('Times', '20'))
-        label.pack(pady=0,padx=0)
-
-        ## ADD CODE HERE TO DESIGN THIS PAGE
-
-    def create_menubar(self, parent):
-        menubar = Menu(parent, bd=3, relief=RAISED, activebackground="#80B9DC")
-
-        ## Filemenu
-        filemenu = Menu(menubar, tearoff=0, relief=RAISED, activebackground="#026AA9")
-        menubar.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New Project", command=lambda: parent.show_frame(parent.Validation))
-        filemenu.add_command(label="Close", command=lambda: parent.show_frame(parent.HomePage))
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=parent.quit)  
-
-        ## proccessing menu
-        processing_menu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Validation", menu=processing_menu)
-        processing_menu.add_command(label="validate")
-        processing_menu.add_separator()
-
-        ## help menu
-        help_menu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=U.about)
-        help_menu.add_separator()
-
-        return menubar
-
-
-#---------------------------------------- Validation PAGE FRAME / CONTAINER ------------------------------------------------------------------------
-
-class Validation(tk.Frame):
-    def __init__(self, parent, container):
-        super().__init__(container)
-
-        label = tk.Label(self, text="Validation Page", font=('Times', '20'))
-        label.pack(pady=0,padx=0)
-
-        ## ADD CODE HERE TO DESIGN THIS PAGE
-
-    def create_menubar(self, parent):
-        menubar = Menu(parent, bd=3, relief=RAISED, activebackground="#80B9DC")
-
-        ## Filemenu
-        filemenu = Menu(menubar, tearoff=0, relief=RAISED, activebackground="#026AA9")
-        menubar.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New Project", command=lambda: parent.show_frame(parent.Validation))
-        filemenu.add_command(label="Close", command=lambda: parent.show_frame(parent.HomePage))
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=parent.quit)  
-
-        ## proccessing menu
-        processing_menu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Validation", menu=processing_menu)
-        processing_menu.add_command(label="validate")
-        processing_menu.add_separator()
-
-        ## help menu
-        help_menu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=U.about)
-        help_menu.add_separator()
-
-        return menubar
+        # Insert filtered data into the table
+        for student in filtered_students:
+            self.tree.insert('', 'end', values=(student.name, student.major, student.department))
 
 
 if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+    # Sample student data (replace this with your actual data)
+    students = [
+        Student("Alice", "Computer Science", "CS"),
+        Student("Bob", "Engineering", "Engineering"),
+        Student("Charlie", "Mathematics", "Math"),
+        Student("David", "Physics", "Physics")
+    ]
 
-    ## IF you find this useful >> Claps on Medium >> Stars on Github >> Subscription on youtube will help me
+    # Create and run the tkinter app
+    app = StudentTableApp(students)
+    app.mainloop()
 
