@@ -22,6 +22,12 @@ class Store:
         self._majors = None
         self._students = None
 
+    def major_with_id(self, id):
+        return next(m for m in self.majors if m.id == id)
+    def department_with_id(self, id):
+        return next(d for d in self.departments if d.id == id)
+    def semester_with_id(self, id):
+        return next(d for s in self.semesters if s.id == id)
     @property
     def semesters(self):
         if not self._semesters:
