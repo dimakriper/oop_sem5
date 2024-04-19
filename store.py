@@ -22,12 +22,14 @@ class Store:
         self._majors = None
         self._students = None
 
+    def student_with_id(self, id):
+        return next(st for st in self.students if st.id == id)
     def major_with_id(self, id):
         return next(m for m in self.majors if m.id == id)
     def department_with_id(self, id):
         return next(d for d in self.departments if d.id == id)
     def semester_with_id(self, id):
-        return next(d for s in self.semesters if s.id == id)
+        return next(s for s in self.semesters if s.id == id)
     @property
     def semesters(self):
         if not self._semesters:
@@ -78,7 +80,8 @@ class Store:
                 e['with-grade'],
                 e['grade']
             ) for e in exams_data]
-            student = Student(item['name'],
+            student = Student(item['id'],
+                              item['name'],
                               item['surname'],
                               item['patronym'],
                               item['major_id'],

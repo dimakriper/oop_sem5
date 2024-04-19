@@ -28,6 +28,15 @@ class Exam:
     def status(self):
         return self._status
 
+    @property
+    def status_str(self):
+        if self._status == 2:
+            return "Зачет"
+        elif self._status == 1:
+            return "Незачёт"
+        else:
+            return " - "
+
 
 class ExamWithGrade(Exam):
     def __init__(self, id, student_id, semester_id, discipline_name, status, grade):
@@ -38,6 +47,14 @@ class ExamWithGrade(Exam):
     @property
     def grade(self):
         return self._grade
+
+    @property
+    def status_str(self):
+        grades = {2: "неудовл.", 3: "удовл.", 4: "хорошо", 5: "отлично"}
+        if not self._status:
+            return " - "
+        else:
+            return grades[self._grade]
 
 class ExamFactory(ABC):
     @abstractmethod

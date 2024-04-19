@@ -4,7 +4,11 @@ class Semester:
         self._end_year = end_year
         self._is_summer = is_summer
 
-    # Getter methods for Semester attributes
+
+    @property
+    def name(self):
+
+        return f'{self._end_year-1}/{self._end_year} {"весенний" if self._is_summer == 1 else "осенний"}'
     @property
     def id(self):
         return self._id
