@@ -6,6 +6,7 @@ from models.exams import *
 class StudentTableApp(tk.Tk):
     def __init__(self, data):
         super().__init__()
+        self.resizable(False, False)
         self.title("Учёт успеваемости на факультете")
         self.data = data
         self.filtered_students = self.data.students
