@@ -75,9 +75,9 @@ class Store:
                 e['id'],
                 e['student_id'],
                 e['semester_id'],
-                e['name'],
+                e['discipline_name'],
                 e['status'],
-                e['with-grade'],
+                e['with_grade'],
                 e['grade']
             ) for e in exams_data]
             student = Student(item['id'],

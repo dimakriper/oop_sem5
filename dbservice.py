@@ -24,21 +24,15 @@ class DatabaseAccessService:
         return students
 
     def get_student_exams(self, student_id=0):
-        # Assuming you have a cursor object connected to your database
 
-        # Define the SQL query with a JOIN between StudentExams and Disciplines tables
         query = f"""
-            SELECT StudentExams.*, Disciplines.name 
+            SELECT *
             FROM StudentExams 
-            INNER JOIN Disciplines 
-            ON StudentExams.discipline_id = Disciplines.id 
             WHERE StudentExams.student_id = {student_id}
         """
 
-        # Execute the SQL query
         self.cursor.execute(query)
 
-        # Fetch all the rows from the result
         return self.cursor.fetchall()
     def get_all_departments(self):
         self.cursor.execute("SELECT * FROM Departments")
@@ -52,3 +46,31 @@ class DatabaseAccessService:
         self.cursor.execute("SELECT * FROM Semesters")
         return self.cursor.fetchall()
 
+    def insert_student(self, name, surname, patronym, department_id, major_id):
+        try:
+            self.cursor.execute("INSERT INTO Students (name, surname, patronym, department_id, major_id) VALUES (?, ?, ?, ?, ?)",
+                                (name, surname, patronym, department_id, major_id))
+            self.connection.commit()
+            return 1
+        except sqlite3.Error:
+            return 0
+
+    def insert_exam(self, student_id, semester_id, status, with_grade, grade, discipline_name):
+
+        self.cursor.execute(
+            "INSERT INTO StudentExams (student_id, semester_id, status, with_grade, grade, discipline_name) VALUES (?, ?, ?, ?, ?, ?)",
+            (student_id, semester_id, status, with_grade, grade, discipline_name))
+        self.connection.commit()
+
+
+
+    def delete_student(self, student_id):
+        try:
+            self.cursor.execute(f"DELETE FROM Students WHERE id = {student_id}")
+            self.connection.commit()
+            return 1
+        except sqlite3.Error:
+            return 0
+    def delete_exam(self, id):
+        self.cursor.execute(f"DELETE FROM StudentExams WHERE id = {id}")
+        self.connection.commit()
