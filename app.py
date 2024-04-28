@@ -6,6 +6,65 @@ from store import Store
 from models.exams import *
 
 
+class DepartmentCreateWindow(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.title('Новый факультет')
+        self.geometry("300x100")
+
+        ttk.Label(self, text="Название факультета:").pack()
+        self.name_entry = ttk.Entry(self)
+        self.name_entry.pack()
+
+        ttk.Button(self,
+                   text='Создать',
+                   command=self.create_department).pack(pady=5)
+
+    def create_department(self):
+        name = self.name_entry.get()
+        if not name:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, заполните название")
+            return
+        insert = Store()._db_service.insert_department(name)
+        if insert:
+            messagebox.showinfo("","Факультет успешно создан")
+        else:
+            messagebox.showwarning("","Не удалось создать факультет")
+        Store()._load_departments()
+        self.parent.dept_combobox.update_values()
+        self.destroy()
+
+
+class MajorCreateWindow(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.title('Новая специальность')
+        self.geometry("300x100")
+
+        ttk.Label(self, text="Название специальности:").pack()
+        self.name_entry = ttk.Entry(self)
+        self.name_entry.pack()
+
+        ttk.Button(self,
+                   text='Создать',
+                   command=self.create_major).pack(pady=5)
+
+    def create_major(self):
+        name = self.name_entry.get()
+        if not name:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, заполните название")
+            return
+        insert = Store()._db_service.insert_major(name)
+        if insert:
+            messagebox.showinfo("","Специальность успешно создана")
+        else:
+            messagebox.showwarning("","Не удалось создать специальность")
+        Store()._load_majors()
+        self.parent.major_combobox.update_values()
+        self.destroy()
+
 class ExamCreateWindow(tk.Toplevel):
     def __init__(self, parent, student):
         super().__init__(parent)
@@ -91,7 +150,7 @@ class StudentReportWindow(tk.Toplevel):
                 label_text = f'{exam.discipline_name}: {exam.status_str}'
                 label = ttk.Label(self.report_frame, text=label_text)
                 label.grid(row=row_index, column=0, sticky='w', padx=5)
-                delete_button = ttk.Button(self.report_frame, text="Delete",
+                delete_button = ttk.Button(self.report_frame, text="Удалить",
                                            command=lambda exam_id=exam.id: delete_exam(exam_id))
                 delete_button.grid(row=row_index, column=1, sticky='w', padx=5)
                 row_index += 1
@@ -161,11 +220,76 @@ class StudentCreateWindow(tk.Toplevel):
         Store()._load_students()
         self.parent.filter_data()
         self.destroy()
+
+class StudentUpdateWindow(tk.Toplevel):
+    def __init__(self, parent, student):
+        super().__init__(parent)
+        self.student = student
+        self.parent = parent
+        self.title(student.full_name)
+        self.geometry("300x300")
+
+        self.dept_combobox = DepartmentSelectWidget(self)
+        ttk.Label(self, text="Факультет:").pack()
+        self.dept_combobox.pack()
+
+        self.major_combobox = MajorSelectWidget(self)
+        ttk.Label(self, text="Cпециальность:").pack()
+        self.major_combobox.pack()
+
+        ttk.Label(self, text="Имя:").pack()
+        self.name_entry = ttk.Entry(self)
+        self.name_entry.insert(0, self.student.name)
+        self.name_entry.pack()
+
+        ttk.Label(self, text="Фамилия:").pack()
+        self.surname_entry = ttk.Entry(self)
+        self.surname_entry.insert(0, self.student.surname)
+        self.surname_entry.pack()
+
+        ttk.Label(self, text="Отчество:").pack()
+        self.patronym_entry = ttk.Entry(self)
+        self.patronym_entry.insert(0, self.student.patronym)
+        self.patronym_entry.pack()
+
+        ttk.Button(self,
+                   text='Сохранить',
+                   command=self.update_student).pack(pady=5)
+
+    def update_student(self):
+        selected_major_name = self.major_combobox.get()
+        selected_department_name = self.dept_combobox.get()
+        major_id = self.major_combobox.map_majors[selected_major_name]
+        department_id = self.dept_combobox.map_departments[selected_department_name]
+        name = self.name_entry.get()
+        surname = self.surname_entry.get()
+        patronym = self.patronym_entry.get()
+        student_id = self.student.id
+
+        # Check if name and surname are filled
+        if not name or not surname:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, заполните поля 'Имя' и 'Фамилия'.")
+            return
+        insert = Store()._db_service.update_student(student_id, name, surname, patronym, department_id, major_id)
+        if insert:
+            messagebox.showinfo("", "Данные обновлены")
+        else:
+            messagebox.showwarning("", "Что-то пошло не так")
+        Store()._load_students()
+        self.parent.filter_data()
+        self.destroy()
+
+
 class DepartmentSelectWidget(ttk.Combobox):
     def __init__(self, parent):
         self.map_departments = {department.name: department.id for department in Store().departments}
         departments_names = list(self.map_departments.keys())
         super().__init__(parent, values=departments_names, state="readonly")
+        self.current(0)
+    def update_values(self):
+        self.map_departments = {department.name: department.id for department in Store().departments}
+        departments_names = list(self.map_departments.keys())
+        self['values'] = departments_names
         self.current(0)
 
 class MajorSelectWidget(ttk.Combobox):
@@ -174,6 +298,12 @@ class MajorSelectWidget(ttk.Combobox):
         majors_names = list(self.map_majors.keys())
         super().__init__(parent, values=majors_names, state="readonly")
         self.current(0)
+    def update_values(self):
+        self.map_majors = {major.name: major.id for major in Store().majors}
+        majors_names = list(self.map_majors.keys())
+        self['values'] = majors_names
+        self.current(0)
+
 
 class SemesterSelectWidget(ttk.Combobox):
     def __init__(self, parent, student=None):
@@ -234,6 +364,9 @@ class StudentTableApp(tk.Tk):
                    text='Новый студент',
                    command=self.open_student_create_window).pack()
         ttk.Button(sidebar_frame,
+                   text='Изменить данные студента',
+                   command=self.on_update_student_button_clicked).pack()
+        ttk.Button(sidebar_frame,
                    text="Удалить студента",
                    command=self.on_delete_student_button_click).pack()
         ttk.Button(sidebar_frame,
@@ -242,6 +375,12 @@ class StudentTableApp(tk.Tk):
         ttk.Button(sidebar_frame,
                    text="Новый экзамен",
                    command=self.open_exam_create_window).pack()
+        ttk.Button(sidebar_frame,
+                   text="Новый факультет",
+                   command=self.open_department_create_window).pack()
+        ttk.Button(sidebar_frame,
+                   text="Новая специальность",
+                   command=self.open_major_create_window).pack()
 
     def filter_data(self, event=None):
         selected_major_name = self.major_combobox.get()
@@ -292,6 +431,19 @@ class StudentTableApp(tk.Tk):
     def on_delete_student_button_click(self, Event=None):
         student = self._get_current_student()
         self.delete_student(student.id)
+
+    def on_update_student_button_clicked(self, Event=None):
+        student = self._get_current_student()
+        window = StudentUpdateWindow(self, student)
+        window.grab_set()
+
+    def open_department_create_window(self):
+        window = DepartmentCreateWindow(self)
+        window.grab_set()
+
+    def open_major_create_window(self):
+        window = MajorCreateWindow(self)
+        window.grab_set()
 
     def _get_current_student(self):
         selected_item = self.tree.focus()
